@@ -1,0 +1,86 @@
+package bk.tddlive.ui;
+
+import bk.tddlive.Data;
+import bk.tddlive.security.AuthService;
+import bk.tddlive.security.Authentication;
+import bk.tddlive.security.IdPwNotMatchingException;
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.mock.web.MockHttpServletResponse;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.*;
+
+public class LoginControllerTest {
+    private LoginController loginController;
+    private AuthService mockAuthService;
+    private MockHttpServletResponse mockResponse;
+
+    @Before
+    public void setUp() throws Exception {
+        mockAuthService = mock(AuthService.class);
+        loginController = new LoginController();
+        loginController.setAuthService(mockAuthService);
+        mockResponse = new MockHttpServletResponse();
+    }
+
+    private LoginCommand createSpiedLoginCommand(String id, String password) {
+        LoginCommand loginCommand = new LoginCommand();
+        loginCommand.setId(id);
+        loginCommand.setPassword(password);
+        return spy(loginCommand);
+    }
+
+    // 폼 요청시, 폼 뷰 리턴
+    @Test
+    public void should_return_form_view_when_request_is_form() {
+        String viewName = loginController.form();
+        assertThat(viewName, is(LoginController.FORM_VIEW));
+    }
+
+    // Submit 요청, LoginCommand 데이터 오류
+    @Test
+    public void should_return_form_view_when_logincommand_is_invalid() {
+        LoginCommand loginCommand = createSpiedLoginCommand("", "");
+
+        String viewName = loginController.submit(loginCommand, mockResponse);
+
+        assertThat(viewName, is(LoginController.FORM_VIEW));
+        verify(loginCommand, times(1)).validate();
+    }
+
+    private void assertViewNameAndVerify(String id, String password, String expectingViewName) {
+        LoginCommand loginCommand = createSpiedLoginCommand(id, password);
+
+        String viewName = loginController.submit(loginCommand, mockResponse);
+        assertThat(viewName, is(expectingViewName));
+
+        verify(loginCommand, times(1)).validate();
+        verify(mockAuthService, times(1)).authenticate(id, password);
+    }
+
+    // Submit 요청, ID/PW 일치하지 않음, 폼 뷰 리턴
+    @Test
+    public void should_return_form_view_when_idpw_is_not_matched() {
+        when(mockAuthService.authenticate(Data.USER_ID, Data.NO_USER_PW))
+                .thenThrow(new IdPwNotMatchingException());
+
+        assertViewNameAndVerify(Data.USER_ID, Data.NO_USER_PW, LoginController.FORM_VIEW);
+    }
+
+    // Submit 요청, ID/PW 일치함, 성공 뷰 리턴
+    @Test
+    public void should_return_success_view_when_idpw_is_matched() {
+        when(mockAuthService.authenticate(Data.USER_ID, Data.USER_PW))
+                .thenReturn(new Authentication(Data.USER_ID));
+
+        assertViewNameAndVerify(Data.USER_ID, Data.USER_PW, LoginController.SUCCESS_VIEW);
+
+        // 마지막 쿠키 처리
+        assertThat(mockResponse.getCookie("AUTH").getValue(), equalTo(Data.USER_ID));
+    }
+
+
+}

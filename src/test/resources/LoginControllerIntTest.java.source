@@ -1,0 +1,45 @@
+package bk.tddlive.ui;
+
+import bk.tddlive.Data;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThat;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration("classpath:/spring-config.xml")
+public class LoginControllerIntTest {
+
+	@Autowired
+	private LoginController loginController;
+
+	private MockHttpServletResponse mockResponse = new MockHttpServletResponse();
+
+	@Test
+	public void submit() {
+		assertSuccessWhenIdPwIsMatched("user1", "1234");
+		assertSuccessWhenIdPwIsMatched("user2", "1234");
+		assertFormViewWhenIdPwIsNotMatched("user1", "invalid");
+		assertFormViewWhenIdPwIsNotMatched("user2", "invalid");
+		assertFormViewWhenIdPwIsNotMatched("userx", "1234");
+	}
+
+	private void assertFormViewWhenIdPwIsNotMatched(String id, String password) {
+		String viewName = loginController.submit(
+				Data.createLoginCommand(id, password),
+				mockResponse);
+		assertThat(viewName, equalTo(LoginController.FORM_VIEW));
+	}
+
+	private void assertSuccessWhenIdPwIsMatched(String id, String password) {
+		String viewName = loginController.submit(
+				Data.createLoginCommand(id, password),
+				mockResponse);
+		assertThat(viewName, equalTo(LoginController.SUCCESS_VIEW));
+	}
+}

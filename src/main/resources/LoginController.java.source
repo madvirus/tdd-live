@@ -1,0 +1,37 @@
+package bk.tddlive.ui;
+
+import bk.tddlive.security.AuthService;
+import bk.tddlive.security.Authentication;
+import bk.tddlive.security.IdPwNotMatchingException;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
+
+public class LoginController {
+
+    public static final String FORM_VIEW = "formview";
+    public static final String SUCCESS_VIEW = "successview";
+
+    private AuthService authService;
+
+    public String form() {
+        return FORM_VIEW;
+    }
+
+    public String submit(LoginCommand loginCommand, HttpServletResponse response) {
+        if (!loginCommand.validate())
+            return FORM_VIEW;
+        try {
+            Authentication authentication = authService.authenticate(
+                    loginCommand.getId(), loginCommand.getPassword());
+            response.addCookie(new Cookie("AUTH", authentication.getId()));
+            return SUCCESS_VIEW;
+        } catch (IdPwNotMatchingException ex) {
+            return FORM_VIEW;
+        }
+    }
+
+    public void setAuthService(AuthService authService) {
+        this.authService = authService;
+    }
+}
