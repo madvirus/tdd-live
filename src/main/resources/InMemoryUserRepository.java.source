@@ -5,7 +5,7 @@ import org.springframework.util.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
 
-public class InMemoryUserRepository { // implements UserRepository {
+public class InMemoryUserRepository implements UserRepository {
 	private Map<String, User> userMap = new HashMap<>();
 
 	public InMemoryUserRepository(String data) {
