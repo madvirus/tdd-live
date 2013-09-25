@@ -2,7 +2,8 @@ package bk.tddlive.ui;
 
 import bk.tddlive.security.AuthService;
 import bk.tddlive.security.Authentication;
-import bk.tddlive.security.IdPwNotMatchingException;
+import bk.tddlive.security.NonExistingUserException;
+import bk.tddlive.security.WrongPasswordException;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
@@ -14,6 +15,10 @@ public class LoginController {
 
     private AuthService authService;
 
+    public LoginController(AuthService authService) {
+        this.authService = authService;
+    }
+
     public String form() {
         return FORM_VIEW;
     }
@@ -22,16 +27,23 @@ public class LoginController {
         if (!loginCommand.validate())
             return FORM_VIEW;
         try {
-            Authentication authentication = authService.authenticate(
-                    loginCommand.getId(), loginCommand.getPassword());
-            response.addCookie(new Cookie("AUTH", authentication.getId()));
+            Authentication auth = authenticate(loginCommand);
+            sendAuthCookie(response, auth);
             return SUCCESS_VIEW;
-        } catch (IdPwNotMatchingException ex) {
+        } catch (NonExistingUserException | WrongPasswordException ex) {
             return FORM_VIEW;
         }
     }
 
-    public void setAuthService(AuthService authService) {
-        this.authService = authService;
+    private Authentication authenticate(LoginCommand loginCommand) {
+        return authService.authenticate(loginCommand.getId(), loginCommand.getPassword());
+    }
+
+    private void sendAuthCookie(HttpServletResponse response, Authentication auth) {
+        response.addCookie(createAuthCookie(auth));
+    }
+
+    private Cookie createAuthCookie(Authentication auth) {
+        return new Cookie("AUTH", auth.getId());
     }
 }
