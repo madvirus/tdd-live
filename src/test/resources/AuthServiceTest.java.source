@@ -54,13 +54,13 @@ public class AuthServiceTest {
     //    ○ User가 존재하지 않는 경우 (정상에서 벗어난)
     @Test
     public void whenUserNotFound_throwEx() {
-        runAuthAndAssertEx("nonUserId", USER_PASSWORD, NonExistingUserException.class);
+        runAuthAndAssertEx("nonUserId", USER_PASSWORD, AuthService.NonExistingUserException.class);
     }
 
     //    ○ ID에 해당하는 User가 존재하는데, PW가 일치하지 않는 경우 (정상에서 벗어난)
     @Test
     public void whenUserFoundAndPwNotMatch_throwEx() throws Exception {
-        runAuthAndAssertEx(USER_ID, "wrongPassword", WrongPasswordException.class);
+        runAuthAndAssertEx(USER_ID, "wrongPassword", AuthService.WrongPasswordException.class);
     }
 
     //    ○ ID와 PW가 일치하는 경우 (정상) ■ 인증 정보를 리턴

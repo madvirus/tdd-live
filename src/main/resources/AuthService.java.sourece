@@ -34,8 +34,17 @@ public class AuthService {
     }
 
     private void throwExIfPasswordNotMatched(User user, String password) {
-        if (! user.matchPassword(password))
+        if (!user.matchPassword(password))
             throw new WrongPasswordException();
+    }
+
+    public static class IdPwNotMatchingException extends RuntimeException {
+    }
+
+    public static class NonExistingUserException extends RuntimeException {
+    }
+
+    public static class WrongPasswordException extends RuntimeException {
     }
 
 }

@@ -2,12 +2,15 @@ package bk.tddlive.ui;
 
 import bk.tddlive.security.AuthService;
 import bk.tddlive.security.Authentication;
-import bk.tddlive.security.NonExistingUserException;
-import bk.tddlive.security.WrongPasswordException;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
+@Controller
+@RequestMapping("/login")
 public class LoginController {
 
     public static final String FORM_VIEW = "formview";
@@ -19,10 +22,12 @@ public class LoginController {
         this.authService = authService;
     }
 
+    @RequestMapping(method = RequestMethod.GET)
     public String form() {
         return FORM_VIEW;
     }
 
+    @RequestMapping(method = RequestMethod.POST)
     public String submit(LoginCommand loginCommand, HttpServletResponse response) {
         if (!loginCommand.validate())
             return FORM_VIEW;
@@ -30,7 +35,7 @@ public class LoginController {
             Authentication auth = authenticate(loginCommand);
             sendAuthCookie(response, auth);
             return SUCCESS_VIEW;
-        } catch (NonExistingUserException | WrongPasswordException ex) {
+        } catch (AuthService.NonExistingUserException | AuthService.WrongPasswordException ex) {
             return FORM_VIEW;
         }
     }
