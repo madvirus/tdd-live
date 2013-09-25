@@ -22,7 +22,6 @@ public class LoginControllerTest {
     private LoginController loginController;
 
     private AuthService mockAuthService;
-    private LoginCommand submittedLoginCommand;
     private MockHttpServletResponse mockResponse;
 
     @Before
@@ -36,24 +35,16 @@ public class LoginControllerTest {
         assertThat(viewName, equalTo(LoginController.FORM_VIEW));
     }
 
-    //    ■ 폼 요청 처리 (쉬움)
-    @Test
-    public void whenRequestIsForm_returnFormView() {
-        String viewName = loginController.form();
-        assertFormView(viewName);
-    }
-
     private void assertFormViewWhenInvalidLoginCommand(String id, String password) {
         String viewName = runSubmit(id, password);
-
         assertFormView(viewName);
-        verify(submittedLoginCommand).validate();
     }
 
     private String runSubmit(String userId, String password) {
         LoginCommand loginCommand = createSpiedLoginCommand(userId, password);
-        this.submittedLoginCommand = loginCommand;
-        return loginController.submit(loginCommand, mockResponse);
+        String viewName = loginController.submit(loginCommand, mockResponse);
+        verify(loginCommand).validate();
+        return viewName;
     }
 
     private LoginCommand createSpiedLoginCommand(String id, String password) {
@@ -67,6 +58,13 @@ public class LoginControllerTest {
         String viewName = runSubmit(userId, password);
         assertFormView(viewName);
         verify(mockAuthService).authenticate(userId, password);
+    }
+
+    //    ■ 폼 요청 처리 (쉬움)
+    @Test
+    public void whenRequestIsForm_returnFormView() {
+        String viewName = loginController.form();
+        assertFormView(viewName);
     }
 
     //    ■ 폼 전송 시, LoginCommand 값 이상, 폼 뷰 리턴 (비정상)
