@@ -9,8 +9,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
-@Controller
-@RequestMapping("/login")
 public class LoginController {
 
     public static final String FORM_VIEW = "formview";
@@ -22,12 +20,10 @@ public class LoginController {
         this.authService = authService;
     }
 
-    @RequestMapping(method = RequestMethod.GET)
     public String form() {
         return FORM_VIEW;
     }
 
-    @RequestMapping(method = RequestMethod.POST)
     public String submit(LoginCommand loginCommand, HttpServletResponse response) {
         if (!loginCommand.validate())
             return FORM_VIEW;
