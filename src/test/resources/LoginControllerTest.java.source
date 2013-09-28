@@ -77,14 +77,14 @@ public class LoginControllerTest {
     //    ■ 폼 전송 시, ID/PW 불일치, 폼 뷰 리턴 (비정상)
     @Test
     public void whenNonExistingUser_returnFormView() throws Exception {
-        when(mockAuthService.authenticate(NO_USER_ID, PASSWORD)).thenThrow(new AuthService.NonExistingUserException());
+        when(mockAuthService.authenticate(NO_USER_ID, PASSWORD)).thenThrow(new NonExistingUserException());
         assertFormViewWhenIdOrPwNotMatch(NO_USER_ID, PASSWORD);
     }
 
     //    ■ 폼 전송 시, ID/PW 불일치, 폼 뷰 리턴 (비정상)
     @Test
     public void whenWrongPassword_returnFormView() throws Exception {
-        when(mockAuthService.authenticate(USER_ID, WRONG_PASSWORD)).thenThrow(new AuthService.WrongPasswordException());
+        when(mockAuthService.authenticate(USER_ID, WRONG_PASSWORD)).thenThrow(new WrongPasswordException());
         assertFormViewWhenIdOrPwNotMatch(USER_ID, WRONG_PASSWORD);
     }
 

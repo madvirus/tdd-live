@@ -31,7 +31,7 @@ public class LoginController {
             Authentication auth = authenticate(loginCommand);
             sendAuthCookie(response, auth);
             return SUCCESS_VIEW;
-        } catch (AuthService.NonExistingUserException | AuthService.WrongPasswordException ex) {
+        } catch (NonExistingUserException | WrongPasswordException ex) {
             return FORM_VIEW;
         }
     }
