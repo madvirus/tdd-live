@@ -2,6 +2,8 @@ package bk.tddlive.ui;
 
 import bk.tddlive.security.AuthService;
 import bk.tddlive.security.Authentication;
+import bk.tddlive.security.NonExistingUserException;
+import bk.tddlive.security.WrongPasswordException;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -74,14 +76,14 @@ public class LoginControllerTest {
         assertFormViewWhenInvalidLoginCommand(USER_ID, "");
     }
 
-    //    ■ 폼 전송 시, ID/PW 불일치, 폼 뷰 리턴 (비정상)
+    //    ■ 폼 전송 시, ID/PW 불일치(사용자 없음), 폼 뷰 리턴 (비정상)
     @Test
     public void whenNonExistingUser_returnFormView() throws Exception {
         when(mockAuthService.authenticate(NO_USER_ID, PASSWORD)).thenThrow(new NonExistingUserException());
         assertFormViewWhenIdOrPwNotMatch(NO_USER_ID, PASSWORD);
     }
 
-    //    ■ 폼 전송 시, ID/PW 불일치, 폼 뷰 리턴 (비정상)
+    //    ■ 폼 전송 시, ID/PW 불일치(잘못된 암호), 폼 뷰 리턴 (비정상)
     @Test
     public void whenWrongPassword_returnFormView() throws Exception {
         when(mockAuthService.authenticate(USER_ID, WRONG_PASSWORD)).thenThrow(new WrongPasswordException());
