@@ -1,6 +1,5 @@
 package bk.tddlive.ui;
 
-import bk.tddlive.domain.User;
 import bk.tddlive.security.AuthService;
 import bk.tddlive.security.Authentication;
 import org.junit.Before;
@@ -63,8 +62,7 @@ public class LoginControllerMVCTest {
     public static class TestConfig {
         @Bean
         public LoginController loginController() {
-            LoginController loginController = new LoginController();
-            loginController.setAuthService(authService());
+            LoginController loginController = new LoginController(authService());
             return loginController;
         }
 

@@ -1,29 +1,50 @@
 package bk.tddlive.ui;
 
-import bk.tddlive.Data;
 import bk.tddlive.security.AuthService;
 import bk.tddlive.security.Authentication;
-import bk.tddlive.security.IdPwNotMatchingException;
+import bk.tddlive.security.NonExistingUserException;
+import bk.tddlive.security.WrongPasswordException;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletResponse;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 
 public class LoginControllerTest {
+
+    public static final String NO_USER_ID = "nouserid";
+    public static final String PASSWORD = "password";
+    public static final String USER_ID = "userid";
+    public static final String WRONG_PASSWORD = "wrongPassword";
+
     private LoginController loginController;
+
     private AuthService mockAuthService;
     private MockHttpServletResponse mockResponse;
 
     @Before
     public void setUp() throws Exception {
         mockAuthService = mock(AuthService.class);
-        loginController = new LoginController();
-        loginController.setAuthService(mockAuthService);
+        loginController = new LoginController(mockAuthService);
         mockResponse = new MockHttpServletResponse();
+    }
+
+    private void assertFormView(String viewName) {
+        assertThat(viewName, equalTo(LoginController.FORM_VIEW));
+    }
+
+    private void assertFormViewWhenInvalidLoginCommand(String id, String password) {
+        String viewName = runSubmit(id, password);
+        assertFormView(viewName);
+    }
+
+    private String runSubmit(String userId, String password) {
+        LoginCommand loginCommand = createSpiedLoginCommand(userId, password);
+        String viewName = loginController.submit(loginCommand, mockResponse);
+        verify(loginCommand).validate();
+        return viewName;
     }
 
     private LoginCommand createSpiedLoginCommand(String id, String password) {
@@ -33,54 +54,50 @@ public class LoginControllerTest {
         return spy(loginCommand);
     }
 
-    // 폼 요청시, 폼 뷰 리턴
+    private void assertFormViewWhenIdOrPwNotMatch(String userId, String password) {
+        String viewName = runSubmit(userId, password);
+        assertFormView(viewName);
+        verify(mockAuthService).authenticate(userId, password);
+    }
+
+    //    ■ 폼 요청 처리 (쉬움)
     @Test
-    public void should_return_form_view_when_request_is_form() {
+    public void whenRequestIsForm_returnFormView() {
         String viewName = loginController.form();
-        assertThat(viewName, is(LoginController.FORM_VIEW));
+        assertFormView(viewName);
     }
 
-    // Submit 요청, LoginCommand 데이터 오류
+    //    ■ 폼 전송 시, LoginCommand 값 이상, 폼 뷰 리턴 (비정상)
     @Test
-    public void should_return_form_view_when_logincommand_is_invalid() {
-        LoginCommand loginCommand = createSpiedLoginCommand("", "");
-
-        String viewName = loginController.submit(loginCommand, mockResponse);
-
-        assertThat(viewName, is(LoginController.FORM_VIEW));
-        verify(loginCommand, times(1)).validate();
+    public void whenInvalidLoginCommand_returnFormView() throws Exception {
+        assertFormViewWhenInvalidLoginCommand(null, PASSWORD);
+        assertFormViewWhenInvalidLoginCommand("", PASSWORD);
+        assertFormViewWhenInvalidLoginCommand(USER_ID, null);
+        assertFormViewWhenInvalidLoginCommand(USER_ID, "");
     }
 
-    private void assertViewNameAndVerify(String id, String password, String expectingViewName) {
-        LoginCommand loginCommand = createSpiedLoginCommand(id, password);
-
-        String viewName = loginController.submit(loginCommand, mockResponse);
-        assertThat(viewName, is(expectingViewName));
-
-        verify(loginCommand, times(1)).validate();
-        verify(mockAuthService, times(1)).authenticate(id, password);
-    }
-
-    // Submit 요청, ID/PW 일치하지 않음, 폼 뷰 리턴
+    //    ■ 폼 전송 시, ID/PW 불일치(사용자 없음), 폼 뷰 리턴 (비정상)
     @Test
-    public void should_return_form_view_when_idpw_is_not_matched() {
-        when(mockAuthService.authenticate(Data.USER_ID, Data.NO_USER_PW))
-                .thenThrow(new IdPwNotMatchingException());
-
-        assertViewNameAndVerify(Data.USER_ID, Data.NO_USER_PW, LoginController.FORM_VIEW);
+    public void whenNonExistingUser_returnFormView() throws Exception {
+        when(mockAuthService.authenticate(NO_USER_ID, PASSWORD)).thenThrow(new NonExistingUserException());
+        assertFormViewWhenIdOrPwNotMatch(NO_USER_ID, PASSWORD);
     }
 
-    // Submit 요청, ID/PW 일치함, 성공 뷰 리턴
+    //    ■ 폼 전송 시, ID/PW 불일치(잘못된 암호), 폼 뷰 리턴 (비정상)
     @Test
-    public void should_return_success_view_when_idpw_is_matched() {
-        when(mockAuthService.authenticate(Data.USER_ID, Data.USER_PW))
-                .thenReturn(new Authentication(Data.USER_ID));
-
-        assertViewNameAndVerify(Data.USER_ID, Data.USER_PW, LoginController.SUCCESS_VIEW);
-
-        // 마지막 쿠키 처리
-        assertThat(mockResponse.getCookie("AUTH").getValue(), equalTo(Data.USER_ID));
+    public void whenWrongPassword_returnFormView() throws Exception {
+        when(mockAuthService.authenticate(USER_ID, WRONG_PASSWORD)).thenThrow(new WrongPasswordException());
+        assertFormViewWhenIdOrPwNotMatch(USER_ID, WRONG_PASSWORD);
     }
 
+    //    ■ 폼 전송 시, ID/PW 일치, 성공 뷰 리턴 (정상) ● 쿠키 생성 확인
+    @Test
+    public void whenIdPwMatching_returnSuccessView() throws Exception {
+        when(mockAuthService.authenticate(USER_ID, PASSWORD)).thenReturn(new Authentication(USER_ID));
+        String viewName = runSubmit(USER_ID, PASSWORD);
+        assertThat(viewName, equalTo(LoginController.SUCCESS_VIEW));
+
+        assertThat(mockResponse.getCookie("AUTH").getValue(), equalTo(USER_ID));
+    }
 
 }
