@@ -31,35 +31,6 @@ public class LoginControllerTest {
         mockResponse = new MockHttpServletResponse();
     }
 
-    private void assertFormView(String viewName) {
-        assertThat(viewName, equalTo(LoginController.FORM_VIEW));
-    }
-
-    private void assertFormViewWhenInvalidLoginCommand(String id, String password) {
-        String viewName = runSubmit(id, password);
-        assertFormView(viewName);
-    }
-
-    private String runSubmit(String userId, String password) {
-        LoginCommand loginCommand = createSpiedLoginCommand(userId, password);
-        String viewName = loginController.submit(loginCommand, mockResponse);
-        verify(loginCommand).validate();
-        return viewName;
-    }
-
-    private LoginCommand createSpiedLoginCommand(String id, String password) {
-        LoginCommand loginCommand = new LoginCommand();
-        loginCommand.setId(id);
-        loginCommand.setPassword(password);
-        return spy(loginCommand);
-    }
-
-    private void assertFormViewWhenIdOrPwNotMatch(String userId, String password) {
-        String viewName = runSubmit(userId, password);
-        assertFormView(viewName);
-        verify(mockAuthService).authenticate(userId, password);
-    }
-
     //    ■ 폼 요청 처리 (쉬움)
     @Test
     public void whenRequestIsForm_returnFormView() {
@@ -100,4 +71,32 @@ public class LoginControllerTest {
         assertThat(mockResponse.getCookie("AUTH").getValue(), equalTo(USER_ID));
     }
 
+    private void assertFormView(String viewName) {
+        assertThat(viewName, equalTo(LoginController.FORM_VIEW));
+    }
+
+    private void assertFormViewWhenInvalidLoginCommand(String id, String password) {
+        String viewName = runSubmit(id, password);
+        assertFormView(viewName);
+    }
+
+    private String runSubmit(String userId, String password) {
+        LoginCommand loginCommand = createSpiedLoginCommand(userId, password);
+        String viewName = loginController.submit(loginCommand, mockResponse);
+        verify(loginCommand).validate();
+        return viewName;
+    }
+
+    private LoginCommand createSpiedLoginCommand(String id, String password) {
+        LoginCommand loginCommand = new LoginCommand();
+        loginCommand.setId(id);
+        loginCommand.setPassword(password);
+        return spy(loginCommand);
+    }
+
+    private void assertFormViewWhenIdOrPwNotMatch(String userId, String password) {
+        String viewName = runSubmit(userId, password);
+        assertFormView(viewName);
+        verify(mockAuthService).authenticate(userId, password);
+    }
 }
