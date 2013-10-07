@@ -2,3 +2,6 @@ tdd-live.iml
 .idea
 target
 .setting
+/.classpath
+/.project
+/.settings
